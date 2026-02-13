@@ -1,3 +1,7 @@
+<p align="right">
+⭐ &nbsp;&nbsp;<strong>the project to show your appreciation.</strong> :arrow_upper_right:
+</p>
+
 # Terminal based Web Browser
 
 Features:
