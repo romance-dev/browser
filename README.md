@@ -6,4 +6,5 @@ Features:
 3. Defaults to Reading Mode
 4. Great for Reading Documentation
 
+## Screenshot of vox.com
 ![vox.com homepage](.github/vox.png)
