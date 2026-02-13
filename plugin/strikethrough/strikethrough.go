@@ -5,10 +5,10 @@ import (
 	"unicode"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/domutils"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/escape"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/domutils"
+	"github.com/romance-dev/browser/internal/escape"
+	"github.com/romance-dev/browser/internal/textutils"
 	"golang.org/x/net/html"
 )
 
@@ -41,6 +41,7 @@ func NewStrikethroughPlugin(opts ...option) converter.Plugin {
 func (s *strikethroughPlugin) Name() string {
 	return "strikethrough"
 }
+
 func (s *strikethroughPlugin) Init(conv *converter.Converter) error {
 	conv.Register.PreRenderer(s.handlePreRender, converter.PriorityStandard)
 
@@ -78,6 +79,7 @@ func nameIsStrikethough(node *html.Node) bool {
 
 	return name == "del" || name == "s" || name == "strike"
 }
+
 func nameIsBothStrikethough(a *html.Node, b *html.Node) bool {
 	return nameIsStrikethough(a) && nameIsStrikethough(b)
 }
@@ -89,6 +91,7 @@ func (s strikethroughPlugin) handleRender(ctx converter.Context, w converter.Wri
 
 	return converter.RenderTryNext
 }
+
 func (s strikethroughPlugin) renderStrikethrough(ctx converter.Context, w converter.Writer, n *html.Node) converter.RenderStatus {
 	var buf bytes.Buffer
 	ctx.RenderChildNodes(ctx, &buf, n)

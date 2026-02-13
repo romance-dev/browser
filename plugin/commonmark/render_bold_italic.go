@@ -4,8 +4,8 @@ import (
 	"bytes"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/textutils"
 	"golang.org/x/net/html"
 )
 
@@ -19,6 +19,7 @@ func (c commonmark) getDelimiter(n *html.Node) []byte {
 		return nil
 	}
 }
+
 func (c commonmark) renderBoldItalic(ctx converter.Context, w converter.Writer, n *html.Node) converter.RenderStatus {
 	var buf bytes.Buffer
 	ctx.RenderChildNodes(ctx, &buf, n)

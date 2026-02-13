@@ -6,9 +6,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/marker"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/textutils"
+	"github.com/romance-dev/browser/marker"
 	"golang.org/x/net/html"
 )
 
@@ -64,6 +64,7 @@ func (c *commonmark) renderInlineCode(_ converter.Context, w converter.Writer, n
 
 	return converter.RenderSuccess
 }
+
 func (c *commonmark) renderBlockCode(_ converter.Context, w converter.Writer, n *html.Node) converter.RenderStatus {
 	code, infoString := getCodeWithoutTags(n)
 
@@ -107,6 +108,7 @@ func getCodeLanguage(n *html.Node) string {
 
 	return ""
 }
+
 func getCodeWithoutTags(startNode *html.Node) ([]byte, string) {
 	var buf bytes.Buffer
 	var infoString string
@@ -114,7 +116,6 @@ func getCodeWithoutTags(startNode *html.Node) ([]byte, string) {
 	var f func(*html.Node)
 	f = func(n *html.Node) {
 		if n.Type == html.ElementNode && (n.Data == "code" || n.Data == "pre") {
-
 			// TODO: what if multiple elements have an info string?
 			if infoString == "" {
 				infoString = getCodeLanguage(n)

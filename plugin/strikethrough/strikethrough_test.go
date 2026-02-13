@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/tester"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/base"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/commonmark"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/strikethrough"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/tester"
+	"github.com/romance-dev/browser/plugin/base"
+	"github.com/romance-dev/browser/plugin/commonmark"
+	"github.com/romance-dev/browser/plugin/strikethrough"
 )
 
 func TestNewStrikethroughPlugin(t *testing.T) {
@@ -62,6 +62,7 @@ func TestNewStrikethroughPlugin(t *testing.T) {
 		})
 	}
 }
+
 func TestWithDelimiter(t *testing.T) {
 	conv := converter.NewConverter(
 		converter.WithPlugins(

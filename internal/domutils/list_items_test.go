@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/tester"
+	"github.com/romance-dev/browser/internal/tester"
 )
 
 func TestMoveListItems(t *testing.T) {

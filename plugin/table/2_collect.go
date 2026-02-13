@@ -4,8 +4,8 @@ import (
 	"bytes"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/marker"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/marker"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )

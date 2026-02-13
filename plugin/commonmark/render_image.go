@@ -3,10 +3,12 @@ package commonmark
 import (
 	"bytes"
 	"strings"
+	"net/url"
+	"path/filepath"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/textutils"
 	"golang.org/x/net/html"
 )
 
@@ -35,6 +37,8 @@ func (c *commonmark) renderImage(ctx converter.Context, w converter.Writer, n *h
 	}
 
 	src = ctx.AssembleAbsoluteURL(ctx, "img", src)
+	src, _ = url.PathUnescape(src) 
+	_, src = filepath.Split(src)
 
 	title := dom.GetAttributeOr(n, "title", "")
 	title = strings.ReplaceAll(title, "\n", " ")

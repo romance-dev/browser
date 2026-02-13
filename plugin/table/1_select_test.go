@@ -3,8 +3,8 @@ package table
 import (
 	"testing"
 
-	"github.com/JohannesKaufmann/html-to-markdown/v2/collapse"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/tester"
+	"github.com/romance-dev/browser/collapse"
+	"github.com/romance-dev/browser/internal/tester"
 	"golang.org/x/net/html"
 )
 

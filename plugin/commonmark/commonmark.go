@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/domutils"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/escape"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/marker"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/domutils"
+	"github.com/romance-dev/browser/internal/escape"
+	"github.com/romance-dev/browser/marker"
 	"golang.org/x/net/html"
 )
 
@@ -52,6 +52,7 @@ func WithBulletListMarker(marker string) OptionFunc {
 		config.BulletListMarker = marker
 	}
 }
+
 func WithListEndComment(enabled bool) OptionFunc {
 	return func(config *config) {
 		config.DisableListEndComment = !enabled
@@ -117,7 +118,6 @@ func WithLinkEmptyContentBehavior(behavior linkRenderingBehavior) OptionFunc {
 
 // NewCommonmarkPlugin registers the markdown syntax of commonmark.
 func NewCommonmarkPlugin(opts ...OptionFunc) converter.Plugin {
-
 	cfg := &config{}
 	for _, opt := range opts {
 		opt(cfg)
@@ -133,6 +133,7 @@ func NewCommonmarkPlugin(opts ...OptionFunc) converter.Plugin {
 func (s *commonmark) Name() string {
 	return "commonmark"
 }
+
 func (cm *commonmark) Init(conv *converter.Converter) error {
 	if err := validateConfig(&cm.config); err != nil {
 		return err
@@ -192,7 +193,6 @@ func (cm commonmark) handlePostRenderCodeBlockNewline(ctx converter.Context, con
 }
 
 func (cm commonmark) handleTextTransform(ctx converter.Context, content string) string {
-
 	if isEnabled, ok := ctx.Value("is_inside_link").(bool); ok && isEnabled {
 		content = strings.Replace(content, string(marker.MarkerEscaping)+`]`, `\]`, -1)
 	}

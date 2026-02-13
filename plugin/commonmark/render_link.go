@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/textutils"
 	"golang.org/x/net/html"
 )
 
@@ -21,23 +21,25 @@ type link struct {
 	content []byte
 	after   []byte
 
-	href  string
-	title string
+	href string
+	// title string
 }
 
 func (c *commonmark) renderLinkInlined(w converter.Writer, l *link) converter.RenderStatus {
-
+	if l.FirstChild != nil && l.FirstChild.Type == html.ElementNode && l.FirstChild.Data == "img" {
+		return converter.RenderTryNext
+	}
 	w.Write(l.before)
 	w.WriteRune('[')
 	w.Write(l.content)
 	w.WriteRune(']')
 	w.WriteRune('(')
-	w.WriteString(l.href)
-	if l.title != "" {
-		// The destination and title must be separated by a space
-		w.WriteRune(' ')
-		w.Write(textutils.SurroundByQuotes([]byte(l.title)))
-	}
+	// 	w.WriteString(l.href)
+	// 	if l.title != "" {
+	// 		// The destination and title must be separated by a space
+	// 		w.WriteRune(' ')
+	// 		w.Write(textutils.SurroundByQuotes([]byte(l.title)))
+	// 	}
 	w.WriteRune(')')
 	w.Write(l.after)
 
@@ -58,13 +60,13 @@ func (c *commonmark) renderLink(ctx converter.Context, w converter.Writer, n *ht
 		return converter.RenderTryNext
 	}
 
-	title := dom.GetAttributeOr(n, "title", "")
-	title = strings.ReplaceAll(title, "\n", " ")
+	// 	title := dom.GetAttributeOr(n, "title", "")
+	// 	title = strings.ReplaceAll(title, "\n", " ")
 
 	l := &link{
-		Node:  n,
-		href:  href,
-		title: title,
+		Node: n,
+		href: href,
+		// 		title: title,
 	}
 
 	var buf bytes.Buffer
@@ -77,11 +79,11 @@ func (c *commonmark) renderLink(ctx converter.Context, w converter.Writer, n *ht
 		return converter.RenderTryNext
 	}
 
-	if l.href == "" {
-		// A link without href is valid, like e.g. [text]()
-		// But a title would make it invalid.
-		l.title = ""
-	}
+	// 	if l.href == "" {
+	// 		// A link without href is valid, like e.g. [text]()
+	// 		// But a title would make it invalid.
+	// 		l.title = ""
+	// 	}
 
 	leftExtra, trimmed, rightExtra := textutils.SurroundingSpaces(content)
 

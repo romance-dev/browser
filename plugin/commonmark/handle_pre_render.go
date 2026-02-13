@@ -2,8 +2,8 @@ package commonmark
 
 import (
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/domutils"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/domutils"
 	"golang.org/x/net/html"
 )
 
@@ -11,6 +11,7 @@ func nameIsBold(node *html.Node) bool {
 	name := dom.NodeName(node)
 	return name == "strong" || name == "b"
 }
+
 func nameIsItalic(node *html.Node) bool {
 	name := dom.NodeName(node)
 	return name == "em" || name == "i"
@@ -19,6 +20,7 @@ func nameIsItalic(node *html.Node) bool {
 func nameIsBoldOrItalic(node *html.Node) bool {
 	return nameIsBold(node) || nameIsItalic(node)
 }
+
 func nameIsBothBoldOrItalic(a, b *html.Node) bool {
 	if nameIsBold(a) && nameIsBold(b) {
 		return true
@@ -34,6 +36,7 @@ func nameIsPre(node *html.Node) bool {
 	name := dom.NodeName(node)
 	return name == "pre"
 }
+
 func nameIsInlineCode(node *html.Node) bool {
 	name := dom.NodeName(node)
 	return name == "code" || name == "var" || name == "samp" || name == "kbd" || name == "tt"

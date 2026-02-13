@@ -5,9 +5,9 @@ import (
 	"regexp"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/marker"
+	"github.com/romance-dev/browser/converter"
+	"github.com/romance-dev/browser/internal/textutils"
+	"github.com/romance-dev/browser/marker"
 	"golang.org/x/net/html"
 )
 
@@ -22,6 +22,7 @@ func (r *commonmark) setextUnderline(level int, width int) []byte {
 
 	return bytes.Repeat([]byte(line), width)
 }
+
 func (r *commonmark) atxPrefix(level int) []byte {
 	return bytes.Repeat([]byte("#"), level)
 }
@@ -44,6 +45,7 @@ func getHeadingLevel(name string) int {
 		return 6
 	}
 }
+
 func runeCount(chars []rune) (count int) {
 	for _, char := range chars {
 		if char == marker.MarkerEscaping {
@@ -53,6 +55,7 @@ func runeCount(chars []rune) (count int) {
 	}
 	return
 }
+
 func getUnderlineWidth(content []byte, minVal int) int {
 	var width int
 

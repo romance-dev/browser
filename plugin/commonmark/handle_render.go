@@ -2,7 +2,7 @@ package commonmark
 
 import (
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
+	"github.com/romance-dev/browser/converter"
 	"golang.org/x/net/html"
 )
 
@@ -10,8 +10,7 @@ func (c *commonmark) handleRender(ctx converter.Context, w converter.Writer, n *
 	name := dom.NodeName(n)
 
 	switch name {
-	case "strong", "b",
-		"em", "i":
+	case "strong", "b", "em", "i":
 		return c.renderBoldItalic(ctx, w, n)
 	case "hr":
 		return c.renderDivider(ctx, w, n)
@@ -22,8 +21,7 @@ func (c *commonmark) handleRender(ctx converter.Context, w converter.Writer, n *
 
 	case "pre":
 		return c.renderBlockCode(ctx, w, n)
-	case "code",
-		"var", "samp", "kbd", "tt":
+	case "code", "var", "samp", "kbd", "tt":
 		return c.renderInlineCode(ctx, w, n)
 
 	case "blockquote":
@@ -43,5 +41,4 @@ func (c *commonmark) handleRender(ctx converter.Context, w converter.Writer, n *
 	}
 
 	return converter.RenderTryNext
-
 }

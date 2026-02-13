@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/JohannesKaufmann/html-to-markdown/v2/converter"
+	"github.com/romance-dev/browser/converter"
 
 	"github.com/JohannesKaufmann/dom"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/collapse"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/domutils"
-	"github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils"
+	"github.com/romance-dev/browser/collapse"
+	"github.com/romance-dev/browser/internal/domutils"
+	"github.com/romance-dev/browser/internal/textutils"
 
 	"golang.org/x/net/html"
 )
@@ -26,6 +26,7 @@ func NewBasePlugin() converter.Plugin {
 func (s *base) Name() string {
 	return "base"
 }
+
 func (b *base) Init(conv *converter.Converter) error {
 	conv.Register.TagType("#comment", converter.TagTypeRemove, converter.PriorityStandard)
 	conv.Register.TagType("head", converter.TagTypeRemove, converter.PriorityStandard)
@@ -110,7 +111,6 @@ var characterEntityReplacer = strings.NewReplacer(
 )
 
 func (b *base) handleTextTransform(ctx converter.Context, content string) string {
-
 	// TODO: similar to UnEscapers also only escape if nessesary.
 	//       "<" only if not followed by space
 	//       "&" only if character entity
@@ -132,6 +132,7 @@ func (b *base) postRenderTrimContent(ctx converter.Context, result []byte) []byt
 
 	return result
 }
+
 func (b *base) postRenderUnescapeContent(ctx converter.Context, result []byte) []byte {
 	result = ctx.UnEscapeContent(result)
 	return result
