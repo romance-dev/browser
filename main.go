@@ -90,6 +90,7 @@ OUTER:
 		var url string
 		var summary bool = true
 		var downloadImages bool = false
+		var quitImmediately bool = false
 		if len(argsWithoutProg) > 0 {
 			url = argsWithoutProg[len(argsWithoutProg)-1]
 			for _, f := range argsWithoutProg {
@@ -101,6 +102,8 @@ OUTER:
 					summary = false
 				} else if f == "-i" {
 					downloadImages = true
+				} else if f == "-q" {
+					quitImmediately = true
 				}
 			}
 			argsWithoutProg = argsWithoutProg[:0]
@@ -132,12 +135,23 @@ OUTER:
 			summary = false
 			downloadImages = true
 			url = strings.TrimSpace(strings.TrimPrefix(url, "-i -f"))
+		} else if strings.HasPrefix(url, "-i -q") {
+			downloadImages = true
+			quitImmediately = true
+			url = strings.TrimSpace(strings.TrimPrefix(url, "-i -q"))
+		} else if strings.HasPrefix(url, "-q -i") {
+			downloadImages = true
+			quitImmediately = true
+			url = strings.TrimSpace(strings.TrimPrefix(url, "-q -i"))
 		} else if strings.HasPrefix(url, "-f") {
 			summary = false
 			url = strings.TrimSpace(strings.TrimPrefix(url, "-f"))
 		} else if strings.HasPrefix(url, "-i") {
 			downloadImages = true
 			url = strings.TrimSpace(strings.TrimPrefix(url, "-i"))
+		} else if strings.HasPrefix(url, "-q") {
+			quitImmediately = true
+			url = strings.TrimSpace(strings.TrimPrefix(url, "-q"))
 		}
 
 		baseURL, err := nurl.Parse(url)
@@ -288,5 +302,9 @@ OUTER:
 		}
 
 		fmt.Println(out)
+
+		if quitImmediately {
+			os.Exit(0)
+		}
 	}
 }
