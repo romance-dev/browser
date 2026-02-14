@@ -250,6 +250,9 @@ OUTER:
 
 		// Look for links
 		for i, link := range linkURLs {
+			if strings.HasPrefix(link, "#") {
+				continue
+			}
 			desc := linkDescs[i]
 			if len(link) > 0 {
 				siteLinks = append(siteLinks, prompt.Suggest{Text: link, Description: desc})
