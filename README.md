@@ -10,7 +10,7 @@ Features:
 3. Defaults to Reading Mode
 4. Great for Reading Documentation
 
-## Screenshot of vox.com (2028-02-14)
+## Screenshot of vox.com (2026-02-14)
 ![vox.com homepage](.github/vox.png)
 
 ## Download Pre-built binaries

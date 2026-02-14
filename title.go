@@ -12,7 +12,7 @@ import (
 
 const (
 	appName    = "Terminal Browser"
-	appVersion = "1.0.0-alpha" // without v prefix
+	appVersion = "1.0.0-alpha.2" // without v prefix
 )
 
 func appTitle() {
