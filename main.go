@@ -248,6 +248,17 @@ OUTER:
 
 		parseTags(htmlSource, baseURL, downloadImages, &linkURLs, &linkDescs, &pageTitle)
 
+		// Look for links
+		for i, link := range linkURLs {
+			desc := linkDescs[i]
+			if len(link) > 0 {
+				siteLinks = append(siteLinks, prompt.Suggest{Text: link, Description: desc})
+			}
+			if len(desc) > 0 {
+				siteDesc = append(siteDesc, prompt.Suggest{Text: desc, Description: link})
+			}
+		}
+
 		// Convert html to markdown (https://github.com/JohannesKaufmann/html-to-markdown)
 		conv := converter.NewConverter(
 			converter.WithPlugins(
@@ -272,24 +283,11 @@ OUTER:
 			continue OUTER
 		}
 
-		// Look for links
-		for i, link := range linkURLs {
-			_desc := linkDescs[i]
-			desc := strings.TrimSuffix(strings.TrimPrefix(_desc, "**"), "**")
-			if len(link) > 0 {
-				siteLinks = append(siteLinks, prompt.Suggest{Text: link, Description: desc})
-			}
-			if len(desc) > 0 {
-				siteDesc = append(siteDesc, prompt.Suggest{Text: desc, Description: link})
-			}
-		}
-
 		clearScreen()
 		addSiteInfo(url, pageTitle, twidth)
 
 		// Render markdown
 		g, _ := glamour.NewTermRenderer(
-			// detect background color and pick either the default dark or light theme
 			// glamour.WithStylePath("dark"),
 			glamour.WithAutoStyle(),
 			glamour.WithWordWrap(twidth),

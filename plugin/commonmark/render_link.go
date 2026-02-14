@@ -32,6 +32,7 @@ func (c *commonmark) renderLinkInlined(w converter.Writer, l *link) converter.Re
 	w.Write(l.before)
 	w.WriteRune('[')
 	w.Write(l.content)
+	w.WriteRune('🔗')
 	w.WriteRune(']')
 	w.WriteRune('(')
 	// 	w.WriteString(l.href)
