@@ -25,7 +25,7 @@ import (
 	"github.com/romance-dev/browser/plugin/table"
 )
 
-const appVersion = "1.0.0-alpha.5" // without v prefix
+const appVersion = "1.0.0-alpha.7" // without v prefix
 
 func completer(d prompt.Document) []prompt.Suggest {
 	uniq := map[prompt.Suggest]struct{}{}
