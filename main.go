@@ -25,7 +25,7 @@ import (
 	"github.com/romance-dev/browser/plugin/table"
 )
 
-const appVersion = "1.0.0-alpha.4" // without v prefix
+const appVersion = "1.0.0-alpha.5" // without v prefix
 
 func completer(d prompt.Document) []prompt.Suggest {
 	uniq := map[prompt.Suggest]struct{}{}
@@ -108,7 +108,6 @@ func main() {
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
 		// Piping in html content
-		// cat file.txt | browser or browser < input_file
 		contents, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			color.Red("❌ Could not render standard input: " + err.Error())
@@ -137,13 +136,26 @@ OUTER:
 		if len(argsWithoutProg) == 0 {
 			input := strings.TrimSpace(prompt.Input(fmt.Sprintf("[ref@%d] site: ", count), completer, prompt.OptionTitle(appName), prompt.OptionHistory(promptHistory), prompt.OptionMaxSuggestion(uint16(len(defaultMenu))), prompt.OptionPrefixTextColor(prompt.Red)))
 			count++
+			flags := []string{"-f", "--html", "-i", "-o", "-q"}
+			putback := []string{}
+			for _, f := range flags {
+				if strings.Contains(input, " "+f) || strings.Contains(input, f+" ") {
+					putback = append(putback, f)
+					input = strings.ReplaceAll(input, f, "")
+				}
+			}
+			input = strings.TrimSpace(input)
+
 			// Check if it's a valid url (It could be a link description instead based on how we store both)
+			// i.e. convert description back to url
 			for _, s := range siteDesc {
 				if input == s.Text {
 					input = s.Description
 					break
 				}
 			}
+
+			input = strings.TrimSpace(input + " " + strings.Join(putback, " "))
 			cmd = strings.Fields(input)
 		}
 		cmd = slices.Concat(cmd, argsWithoutProg)
@@ -182,7 +194,6 @@ OUTER:
 				continue
 			}
 
-			// The url may be a link description which we need to map to an actual url
 			if isValidURL(s) {
 				inst.url = s
 				break
