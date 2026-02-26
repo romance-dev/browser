@@ -24,9 +24,14 @@ var (
 	commentColor        = color.New(color.Italic, color.FgGreen)
 	errColor            = color.New(color.Bold, color.FgRed)
 	textColor           = color.New(color.FgBlack)
-	addIndents          = func(depth int) { addNewLine(1); addIndentsNoNewLine(depth) }
-	addIndentsNoNewLine = func(depth int) { fmt.Print(strings.Repeat(indent, depth)) }
-	addNewLine          = func(n int) { fmt.Print(strings.Repeat("\n", n)) }
+	addIndents          = func(depth *int) { addNewLine(1); addIndentsNoNewLine(depth) }
+	addIndentsNoNewLine = func(depth *int) {
+		if *depth < 0 {
+			*depth = 0
+		}
+		fmt.Print(strings.Repeat(indent, *depth))
+	}
+	addNewLine = func(n int) { fmt.Print(strings.Repeat("\n", n)) }
 )
 
 var re = regexp.MustCompile("\\s+")
@@ -84,15 +89,15 @@ NEXT_TOKEN:
 
 			comment := strings.TrimSpace(b2s(T.Text()))
 			if len(comment) > 0 {
-				addIndents(depth)
+				addIndents(&depth)
 				commentColor.Print("<!--")
 
 				if strings.Contains(comment, "\n") { // comment is multi-line
 					for line := range strings.Lines(comment) {
-						addIndents(depth + 1)
+						addIndents(new(depth + 1))
 						commentColor.Print(line)
 					}
-					addIndents(depth)
+					addIndents(&depth)
 				} else {
 					commentColor.Printf(" %s ", comment)
 				}
@@ -103,7 +108,7 @@ NEXT_TOKEN:
 		case html.DoctypeToken:
 			// A DoctypeToken looks like <!DOCTYPE x>
 			depth++
-			addIndents(depth)
+			addIndents(&depth)
 			commentColor.Printf("<!DOCTYPE %s>", b2s(T.Text()))
 			depth--
 		case html.StartTagToken, html.SelfClosingTagToken:
@@ -124,7 +129,7 @@ NEXT_TOKEN:
 				}
 			}
 
-			addIndents(depth)
+			addIndents(&depth)
 			tagColor.Print("<", tag)
 			if hasAttr {
 				for {
@@ -161,7 +166,7 @@ NEXT_TOKEN:
 			}
 
 			if !(openTag && smallText) {
-				addIndents(depth)
+				addIndents(&depth)
 			}
 
 			tagColor.Printf("</%s>", tag)
@@ -173,7 +178,7 @@ NEXT_TOKEN:
 			txt := b2s(T.Text())
 			if script {
 				for line := range strings.Lines(txt) {
-					addIndentsNoNewLine(depth + 1)
+					addIndentsNoNewLine(new(depth + 1))
 					err := quick.Highlight(os.Stdout, line, "javascript", "terminal256", "xcode")
 					if err != nil {
 						errColor.Print(line)
@@ -181,7 +186,7 @@ NEXT_TOKEN:
 				}
 			} else if style {
 				for line := range strings.Lines(txt) {
-					addIndentsNoNewLine(depth + 1)
+					addIndentsNoNewLine(new(depth + 1))
 					err := quick.Highlight(os.Stdout, line, "css", "terminal256", "xcode")
 					if err != nil {
 						errColor.Print(line)
@@ -195,7 +200,7 @@ NEXT_TOKEN:
 				if len(trimmed) > 0 && len(trimmed) <= smallTextLen && !strings.Contains(trimmed, "\n") {
 					smallText = true
 					if !openTag {
-						addIndents(depth + 1)
+						addIndents(new(depth + 1))
 					}
 					textColor.Print(trimmed)
 				} else {
@@ -205,7 +210,7 @@ NEXT_TOKEN:
 						if i == 0 {
 							textColor.Print("\n")
 						}
-						addIndentsNoNewLine(depth + 1)
+						addIndentsNoNewLine(new(depth + 1))
 						textColor.Print(line)
 						textColor.Print("\n")
 						i++
