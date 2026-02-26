@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http/cookiejar"
 	"os"
 	"os/exec"
 	"reflect"
@@ -10,6 +11,11 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/term"
 )
+
+var jar = func() *cookiejar.Jar {
+	jar, _ := cookiejar.New(nil)
+	return jar
+}()
 
 func b2s(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))

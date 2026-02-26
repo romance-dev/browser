@@ -1,19 +1,24 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
-	"net/http/cookiejar"
 	nurl "net/url"
 	"os"
+	"slices"
 	"strings"
 
+	"github.com/alecthomas/chroma/v2/lexers"
+	"github.com/alecthomas/chroma/v2/quick"
 	"github.com/c-bata/go-prompt"
 	"github.com/charmbracelet/glamour"
 	"github.com/cixtor/readability"
 	"github.com/fatih/color"
 	"github.com/pkg/browser"
+
 	"github.com/romance-dev/browser/converter"
 	"github.com/romance-dev/browser/plugin/base"
 	"github.com/romance-dev/browser/plugin/commonmark"
@@ -21,9 +26,10 @@ import (
 	"github.com/romance-dev/browser/plugin/table"
 )
 
-// theme
+const appVersion = "1.0.0-alpha.3" // without v prefix
 
 func completer(d prompt.Document) []prompt.Suggest {
+	uniq := map[prompt.Suggest]struct{}{}
 	s := []prompt.Suggest{}
 
 	for _, site := range defaultMenu {
@@ -31,15 +37,19 @@ func completer(d prompt.Document) []prompt.Suggest {
 	}
 
 	for _, site := range history {
-		s = append(s, site)
+		uniq[site] = struct{}{}
 	}
 
 	for _, site := range siteLinks {
-		s = append(s, site)
+		uniq[site] = struct{}{}
 	}
 
 	for _, site := range siteDesc {
-		s = append(s, site)
+		uniq[site] = struct{}{}
+	}
+
+	for k := range uniq {
+		s = append(s, k)
 	}
 
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
@@ -53,67 +63,137 @@ var (
 		{Text: "https://", Description: ""},
 		{Text: "http://www.", Description: ""},
 		{Text: "https://www.", Description: ""},
-		{Text: "-o", Description: "Open site in default browser"},
 		{Text: "-f", Description: "Disable Reading Mode (show full site)"},
+		{Text: "--html", Description: "Display Page Source"},
 		{Text: "-i", Description: "Enable image rendering (experimental)"},
+		{Text: "-o", Description: "Open site in default browser"},
 		{Text: "-q", Description: "Quit after rendering page"},
-		{Text: "exit", Description: "Exit browser"},
+		{Text: "back", Description: "Previous page"},
 		{Text: "help", Description: "Show Help"},
 		{Text: "version", Description: "Display Version"},
+		{Text: "exit", Description: "Exit browser"},
 	}
-	history       = make([]prompt.Suggest, 0)
-	promptHistory = make([]string, 0)
-	siteLinks     = make([]prompt.Suggest, 0)
-	siteDesc      = make([]prompt.Suggest, 0)
+	history            = make([]prompt.Suggest, 0)
+	instructionHistory = make([]instruction, 0)
+	promptHistory      = make([]string, 0)
+	siteLinks          = make([]prompt.Suggest, 0)
+	siteDesc           = make([]prompt.Suggest, 0)
 )
 
-var jar *cookiejar.Jar
+type instruction struct {
+	url             string
+	fullsite        bool
+	imageRender     bool
+	quitImmediately bool
+	renderSource    bool
+	command         string
+}
 
 func main() {
-	jar, _ = cookiejar.New(nil)
 	argsWithoutProg := os.Args[1:]
 
-	if len(argsWithoutProg) > 0 && argsWithoutProg[0] == "version" {
+	if found, _ := checkCommand(argsWithoutProg, "version"); found {
 		fmt.Printf("%s (v%v)\n", appName, appVersion)
 		os.Exit(0)
 	}
 
-	if len(argsWithoutProg) > 0 && argsWithoutProg[0] == "help" {
+	if found, _ := checkCommand(argsWithoutProg, "help"); found {
 		displayHelp()
 		os.Exit(0)
 	}
 
 	appTitle()
 
-OUTER:
-	for {
-		var url string
-		var summary bool = true
-		var downloadImages bool = false
-		var quitImmediately bool = false
-		if len(argsWithoutProg) > 0 {
-			url = argsWithoutProg[len(argsWithoutProg)-1]
-			for _, f := range argsWithoutProg {
-				if f == "-o" {
-					browser.OpenURL(url)
-					argsWithoutProg = argsWithoutProg[:0]
-					continue OUTER
-				} else if f == "-f" {
-					summary = false
-				} else if f == "-i" {
-					downloadImages = true
-				} else if f == "-q" {
-					quitImmediately = true
-				}
-			}
-			argsWithoutProg = argsWithoutProg[:0]
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		// Piping in html content
+		// cat file.txt | browser or browser < input_file
+		contents, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			color.Red("❌ Could not render standard input: " + err.Error())
 		} else {
-			url = prompt.Input("site: ", completer, prompt.OptionHistory(promptHistory), prompt.OptionMaxSuggestion(uint16(len(defaultMenu))), prompt.OptionPrefixTextColor(prompt.Red))
+			lexer := lexers.Analyse(b2s(contents))
+			if lexer != nil && lexer.Config().Name != "HTML" && lexer.Config().Name != "GDScript3" {
+				err := quick.Highlight(os.Stdout, b2s(contents), lexer.Config().Name, "terminal256", "xcode")
+				if err != nil {
+					color.Red("❌ Could not render standard input: " + err.Error())
+				} else {
+					addNewLine(2)
+				}
+			} else {
+				printHTML(bytes.NewReader(contents))
+			}
 		}
 
-		url = strings.TrimSpace(url)
+		if found, _ := checkCommand(argsWithoutProg, "-q"); found {
+			os.Exit(0)
+		}
+	}
 
-		switch url {
+OUTER:
+	for {
+		var cmd []string
+		if len(argsWithoutProg) == 0 {
+			input := strings.TrimSpace(prompt.Input(fmt.Sprintf("[%s] site: ", words[rand.IntN(len(words))]), completer, prompt.OptionTitle(appName), prompt.OptionHistory(promptHistory), prompt.OptionMaxSuggestion(uint16(len(defaultMenu))), prompt.OptionPrefixTextColor(prompt.Red)))
+			// Check if it's a valid url (It could be a link description instead based on how we store both)
+			for _, s := range siteDesc {
+				if input == s.Text {
+					input = s.Description
+					break
+				}
+			}
+			cmd = strings.Fields(input)
+		}
+		cmd = slices.Concat(cmd, argsWithoutProg)
+		argsWithoutProg = argsWithoutProg[:0]
+		siteLinks = siteLinks[:0]
+		siteDesc = siteDesc[:0]
+
+		if found, url := checkCommand(cmd, "-o"); found {
+			if url != "" {
+				browser.OpenURL(url)
+			}
+			continue OUTER
+		}
+
+		// Parse command into instruction
+		inst := instruction{}
+
+		if found, _ := checkCommand(cmd, "-f"); found {
+			inst.fullsite = true
+		}
+
+		if found, _ := checkCommand(cmd, "-i"); found {
+			inst.imageRender = true
+		}
+
+		if found, _ := checkCommand(cmd, "-q"); found {
+			inst.quitImmediately = true
+		}
+
+		if found, _ := checkCommand(cmd, "--html"); found {
+			inst.renderSource = true
+		}
+
+		for _, s := range cmd {
+			if strings.HasPrefix(s, "-") {
+				continue
+			}
+
+			// The url may be a link description which we need to map to an actual url
+			if isValidURL(s) {
+				inst.url = s
+				break
+			} else {
+				inst.command = s
+				break
+			}
+		}
+
+		instructionHistory = append(instructionHistory, inst)
+
+		// Process command
+		switch inst.command {
 		case "exit", "close", "quit":
 			os.Exit(0)
 		case "version":
@@ -122,65 +202,34 @@ OUTER:
 		case "help":
 			displayHelp()
 			continue OUTER
+		case "back", "goback":
+			// Remove "back" from instructionHistory
+			instructionHistory = instructionHistory[:len(instructionHistory)-1]
+
+			if len(instructionHistory) == 0 {
+				continue OUTER
+			}
+
+			// Remove currently displayed page from instructionHistory
+			instructionHistory = instructionHistory[:len(instructionHistory)-1]
+
+			inst = instructionHistory[len(instructionHistory)-1]
 		}
 
-		if strings.HasPrefix(url, "-o") {
-			browser.OpenURL(strings.TrimSpace(strings.TrimPrefix(url, "-o")))
-			continue OUTER
-		} else if strings.HasPrefix(url, "-f -i") {
-			summary = false
-			downloadImages = true
-			url = strings.TrimSpace(strings.TrimPrefix(url, "-f -i"))
-		} else if strings.HasPrefix(url, "-i -f") {
-			summary = false
-			downloadImages = true
-			url = strings.TrimSpace(strings.TrimPrefix(url, "-i -f"))
-		} else if strings.HasPrefix(url, "-i -q") {
-			downloadImages = true
-			quitImmediately = true
-			url = strings.TrimSpace(strings.TrimPrefix(url, "-i -q"))
-		} else if strings.HasPrefix(url, "-q -i") {
-			downloadImages = true
-			quitImmediately = true
-			url = strings.TrimSpace(strings.TrimPrefix(url, "-q -i"))
-		} else if strings.HasPrefix(url, "-f") {
-			summary = false
-			url = strings.TrimSpace(strings.TrimPrefix(url, "-f"))
-		} else if strings.HasPrefix(url, "-i") {
-			downloadImages = true
-			url = strings.TrimSpace(strings.TrimPrefix(url, "-i"))
-		} else if strings.HasPrefix(url, "-q") {
-			quitImmediately = true
-			url = strings.TrimSpace(strings.TrimPrefix(url, "-q"))
-		}
-
-		baseURL, err := nurl.Parse(url)
+		baseURL, err := nurl.Parse(inst.url)
 		if err != nil {
 			color.Red("❌ Could not render site")
 			continue OUTER
 		}
 
-		// Check if it's a valid url (It could be a link description instead based on how we store both)
-		for _, s := range siteDesc {
-			if url == s.Text {
-				url = s.Description
-				break
-			}
-		}
-
-		siteLinks = siteLinks[:0]
-		siteDesc = siteDesc[:0]
-
-		client := &http.Client{
-			Jar: jar,
-		}
-		req, err := http.NewRequest("GET", url, nil)
+		client := &http.Client{Jar: jar}
+		req, err := http.NewRequest("GET", inst.url, nil)
 		if err != nil {
 			color.Red("❌ Could not render site")
 			continue OUTER
 		}
 		req.Header.Set("User-Agent", chromeUserAgent)
-		req.Header.Set("Accept", `text/html, text/html;q=0.9, */*;q=0.8`)
+		req.Header.Set("Accept", `text/html, */*;q=0.8`)
 		req.Header.Set("Sec-CH-UA-Mobile", `?1`)
 
 		color.Green("Loading site...")
@@ -193,16 +242,20 @@ OUTER:
 		}
 		defer resp.Body.Close()
 
-		history = append(history, prompt.Suggest{Text: url})
-		promptHistory = append(promptHistory, url)
+		contentType := resp.Header.Get("Content-Type")
+		if before, _, found := strings.Cut(contentType, ";"); found {
+			contentType = before
+		}
+
+		promptHistory = append(promptHistory, strings.Join(cmd, " ")) // prompt history via up/down keys
 
 		var htmlSource string
 
 		pageTitle := ""
-		if summary {
+		if !inst.fullsite && contentType == "text/html" {
 			// Extract readable bits only
 			read := readability.New()
-			article, err := read.Parse(resp.Body, url)
+			article, err := read.Parse(resp.Body, inst.url)
 			if err != nil {
 				color.Red("❌ Could not render site")
 				continue OUTER
@@ -221,32 +274,16 @@ OUTER:
 
 		twidth := terminalWidth()
 
-		testingHTML := `
-		
-		<h1>Hello</h1>
-		
-		<a href="http://ninemsn.com.au">Welcome</a>
-		
-
-		
-		<a href="http://ninemsn.com.au">func GetState[V any](ctx context.Context, key string) V</a>
-		
-		<br>
-		<img alt="alt image" src="https://png.pngtree.com/png-clipart/20200225/original/pngtree-image-of-cute-radish-vector-or-color-illustration-png-image_5274337.jpg" />
-		
-		<br/>
-		<br/>
-		<a href="http://ninemsn.com.au"><img alt="alt image" src="https://png.pngtree.com/png-clipart/20200225/original/pngtree-image-of-cute-radish-vector-or-color-illustration-png-image_5274337.jpg" /></a>
-
-		`
-
-		_ = testingHTML
-
 		// Download all images and store in cache + record link information
 		linkURLs := []string{}  // Contains the urls
 		linkDescs := []string{} // Contains the url descriptions
 
-		parseTags(htmlSource, baseURL, downloadImages, &linkURLs, &linkDescs, &pageTitle)
+		parseTags(htmlSource, baseURL, inst.imageRender, &linkURLs, &linkDescs, &pageTitle)
+
+		history = append(history, prompt.Suggest{Text: inst.url, Description: pageTitle})
+		if pageTitle != "" {
+			history = append(history, prompt.Suggest{Text: pageTitle, Description: inst.url})
+		}
 
 		// Look for links
 		for i, link := range linkURLs {
@@ -262,7 +299,32 @@ OUTER:
 			}
 		}
 
-		// Convert html to markdown (https://github.com/JohannesKaufmann/html-to-markdown)
+		if inst.renderSource {
+			lexer := lexers.MatchMimeType(contentType)
+			if lexer == nil {
+				lexer = lexers.Match(inst.url)
+				if lexer == nil {
+					lexer = lexers.Analyse(htmlSource)
+				}
+			}
+
+			clearScreen()
+			addSiteInfo(inst.url+" (source)", pageTitle, twidth)
+
+			if lexer != nil && lexer.Config().Name != "HTML" && lexer.Config().Name != "GDScript3" {
+				err := quick.Highlight(os.Stdout, htmlSource, lexer.Config().Name, "terminal256", "xcode")
+				if err != nil {
+					color.Red("❌ Could not display page source: " + err.Error())
+				} else {
+					addNewLine(2)
+				}
+			} else {
+				printHTML(bytes.NewReader(s2b(htmlSource)))
+			}
+			continue OUTER
+		}
+
+		// Convert html to markdown
 		conv := converter.NewConverter(
 			converter.WithPlugins(
 				base.NewBasePlugin(),
@@ -272,13 +334,12 @@ OUTER:
 			),
 		)
 
-		if downloadImages {
-			conv.Register.RendererFor("img", converter.TagTypeInline, renderImg(twidth, downloadImages), converter.PriorityEarly)
+		if inst.imageRender {
+			conv.Register.RendererFor("img", converter.TagTypeInline, renderImg(twidth, inst.imageRender), converter.PriorityEarly)
 		}
 
 		markdown, err := conv.ConvertString(
 			htmlSource,
-			// testingHTML,
 			converter.WithDomain(fmt.Sprintf("%s://%s", req.URL.Scheme, req.URL.Host)),
 		)
 		if err != nil {
@@ -287,11 +348,10 @@ OUTER:
 		}
 
 		clearScreen()
-		addSiteInfo(url, pageTitle, twidth)
+		addSiteInfo(inst.url, pageTitle, twidth)
 
 		// Render markdown
 		g, _ := glamour.NewTermRenderer(
-			// glamour.WithStylePath("dark"),
 			glamour.WithAutoStyle(),
 			glamour.WithWordWrap(twidth),
 		)
@@ -304,7 +364,7 @@ OUTER:
 
 		fmt.Println(out)
 
-		if quitImmediately {
+		if inst.quitImmediately {
 			os.Exit(0)
 		}
 	}

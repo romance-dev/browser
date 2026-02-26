@@ -1,7 +1,3 @@
-/*
-CODE FROM https://github.com/nearlynithin/go-ascii
-*/
-
 package main
 
 import (
@@ -91,23 +87,21 @@ func parseTags(htmlSource string, baseURL *url.URL, downloadImages bool, linkURL
 	if downloadImages {
 		var wg sync.WaitGroup
 		for _, fullURL := range imageURLs {
-			wg.Go(func() {
-				if _, exists := imageCache.Load(fullURL); !exists {
-					go func(fullURL string) {
-						resp, err := http.Get(fullURL)
-						if err != nil {
-							return
-						}
-						defer resp.Body.Close()
+			if _, exists := imageCache.Load(fullURL); !exists {
+				wg.Go(func() {
+					resp, err := http.Get(fullURL)
+					if err != nil {
+						return
+					}
+					defer resp.Body.Close()
 
-						m, _, err := image.Decode(resp.Body)
-						if err != nil {
-							return
-						}
-						imageCache.Store(fullURL, m)
-					}(fullURL)
-				}
-			})
+					m, _, err := image.Decode(resp.Body)
+					if err != nil {
+						return
+					}
+					imageCache.Store(fullURL, m)
+				})
+			}
 		}
 		wg.Wait()
 	}

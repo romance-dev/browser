@@ -31,10 +31,13 @@ func (c *commonmark) renderLinkInlined(w converter.Writer, l *link) converter.Re
 	}
 	w.Write(l.before)
 	w.WriteRune('[')
-	w.Write(l.content)
-	href, _ := dom.GetAttribute(l.Node, "href")
-	if !strings.HasPrefix(href, "#") {
-		w.WriteRune('🔗')
+	if len(l.content) > 0 {
+		w.Write(l.content)
+		href, _ := dom.GetAttribute(l.Node, "href")
+		if !strings.HasPrefix(href, "#") {
+			w.WriteRune(' ')
+			w.WriteRune('🔗')
+		}
 	}
 	w.WriteRune(']')
 	w.WriteRune('(')

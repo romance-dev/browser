@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/JohannesKaufmann/dom v0.2.0
+	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/cixtor/readability v1.0.0
@@ -19,7 +20,6 @@ require (
 )
 
 require (
-	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -49,6 +49,7 @@ require (
 	github.com/pkg/term v1.2.0-beta.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/wayneashleyberry/terminal-dimensions v1.1.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/goldmark-emoji v1.0.5 // indirect

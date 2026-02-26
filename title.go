@@ -10,10 +10,7 @@ import (
 	"golang.org/x/term"
 )
 
-const (
-	appName    = "Terminal Browser"
-	appVersion = "1.0.0-alpha.2" // without v prefix
-)
+const appName = "Terminal Browser"
 
 func appTitle() {
 	title := fmt.Sprintf("%s (v%v)", appName, appVersion)
