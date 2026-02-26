@@ -139,9 +139,12 @@ OUTER:
 			flags := []string{"-f", "--html", "-i", "-o", "-q"}
 			putback := []string{}
 			for _, f := range flags {
-				if strings.Contains(input, " "+f) || strings.Contains(input, f+" ") {
+				if strings.Contains(input, " "+f) {
 					putback = append(putback, f)
-					input = strings.ReplaceAll(input, f, "")
+					input = strings.ReplaceAll(input, " "+f, "")
+				} else if strings.Contains(input, f+" ") {
+					putback = append(putback, f)
+					input = strings.ReplaceAll(input, f+" ", "")
 				}
 			}
 			input = strings.TrimSpace(input)
