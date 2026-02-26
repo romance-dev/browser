@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"math/rand/v2"
 	"net/http"
 	nurl "net/url"
 	"os"
@@ -26,7 +25,7 @@ import (
 	"github.com/romance-dev/browser/plugin/table"
 )
 
-const appVersion = "1.0.0-alpha.3" // without v prefix
+const appVersion = "1.0.0-alpha.4" // without v prefix
 
 func completer(d prompt.Document) []prompt.Suggest {
 	uniq := map[prompt.Suggest]struct{}{}
@@ -89,6 +88,8 @@ type instruction struct {
 	command         string
 }
 
+var count int
+
 func main() {
 	argsWithoutProg := os.Args[1:]
 
@@ -134,7 +135,8 @@ OUTER:
 	for {
 		var cmd []string
 		if len(argsWithoutProg) == 0 {
-			input := strings.TrimSpace(prompt.Input(fmt.Sprintf("[%s] site: ", words[rand.IntN(len(words))]), completer, prompt.OptionTitle(appName), prompt.OptionHistory(promptHistory), prompt.OptionMaxSuggestion(uint16(len(defaultMenu))), prompt.OptionPrefixTextColor(prompt.Red)))
+			input := strings.TrimSpace(prompt.Input(fmt.Sprintf("[ref@%d] site: ", count), completer, prompt.OptionTitle(appName), prompt.OptionHistory(promptHistory), prompt.OptionMaxSuggestion(uint16(len(defaultMenu))), prompt.OptionPrefixTextColor(prompt.Red)))
+			count++
 			// Check if it's a valid url (It could be a link description instead based on how we store both)
 			for _, s := range siteDesc {
 				if input == s.Text {
@@ -212,6 +214,10 @@ OUTER:
 
 			// Remove currently displayed page from instructionHistory
 			instructionHistory = instructionHistory[:len(instructionHistory)-1]
+
+			if len(instructionHistory) == 0 {
+				continue OUTER
+			}
 
 			inst = instructionHistory[len(instructionHistory)-1]
 		}
