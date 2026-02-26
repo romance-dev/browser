@@ -33,3 +33,12 @@ Alternatively, you can pass the `--html -f` flags to a url.
 
 ## Download Pre-built binaries
 https://github.com/romance-dev/browser/releases
+
+or
+
+```bash
+GOOS=windows GOARCH=amd64  go build -trimpath -ldflags="-s -w" .
+GOOS=linux GOARCH=amd64  go build -trimpath -ldflags="-s -w" .
+GOOS=darwin GOARCH=amd64  go build -trimpath -ldflags="-s -w" .
+GOOS=darwin GOARCH=arm64  go build -trimpath -ldflags="-s -w" .
+```
